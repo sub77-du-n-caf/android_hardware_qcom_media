@@ -416,6 +416,21 @@ enum OMX_QCOM_EXTN_INDEXTYPE
     QOMX_IndexConfigVideoLTRMark = 0x7F00002C,
 
     OMX_GoogleAndroidIndexPrepareForAdaptivePlayback = 0x7F00002D,
+
+    /* Vpp Hqv Control Type */
+    OMX_QcomIndexParamVppHqvControl = 0x7F000045,
+
+    /* Enable VPP */
+    OMX_QcomIndexParamEnableVpp = 0x7F000046,
+
+    OMX_QcomIndexConfigH264EntropyCodingCabac = 0x7F000049,
+
+    OMX_QTIIndexParamVQZipSEIExtraData = 0x7F000052,
+
+    /* Enable VQZIP SEI NAL type */
+    OMX_QTIIndexParamVQZIPSEIType = 0x7F000053,
+
+    OMX_QcomIndexParamPictureOrderCountType = 0x7F000054,
 };
 
 /**
@@ -1090,6 +1105,122 @@ typedef struct QOMX_VUI_BITSTREAM_RESTRICT {
     OMX_VERSIONTYPE nVersion;
     OMX_BOOL bEnable;
 } QOMX_VUI_BITSTREAM_RESTRICT;
+
+/**
+ * This structure is used to indicate the maximum number of buffers
+ * that a port will hold during data flow.
+ *
+ * STRUCT MEMBERS:
+ *  nSize              : Size of the structure in bytes
+ *  nVersion           : OMX specification version info
+ *  nPortIndex         : Port that this structure applies to
+ *  nHeldBufferCount   : Read-only, maximum number of buffers that will be held
+ */
+typedef struct QOMX_HELDBUFFERCOUNTTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nHeldBufferCount;
+} QOMX_HELDBUFFERCOUNTTYPE;
+
+typedef enum QOMX_VIDEO_HIERARCHICALCODINGTYPE {
+    QOMX_HIERARCHICALCODING_P = 0x01,
+    QOMX_HIERARCHICALCODING_B = 0x02,
+} QOMX_VIDEO_HIERARCHICALCODINGTYPE;
+
+typedef struct QOMX_VIDEO_HIERARCHICALLAYERS {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nNumLayers;
+    QOMX_VIDEO_HIERARCHICALCODINGTYPE eHierarchicalCodingType;
+} QOMX_VIDEO_HIERARCHICALLAYERS;
+
+typedef struct QOMX_VIDEO_H264ENTROPYCODINGTYPE {
+   OMX_U32 nSize;
+   OMX_VERSIONTYPE nVersion;
+   OMX_BOOL bCabac;
+   OMX_U32 nCabacInitIdc;
+} QOMX_VIDEO_H264ENTROPYCODINGTYPE;
+
+/* VIDEO POSTPROCESSING CTRLS AND ENUMS */
+#define QOMX_VPP_HQV_CUSTOMPAYLOAD_SZ 256
+#define VPP_HQV_CONTROL_GLOBAL_START (VPP_HQV_CONTROL_CUST + 1)
+
+typedef enum QOMX_VPP_HQV_MODE {
+    VPP_HQV_MODE_OFF,
+    VPP_HQV_MODE_AUTO,
+    VPP_HQV_MODE_MANUAL,
+    VPP_HQV_MODE_MAX
+} QOMX_VPP_HQV_MODE;
+
+typedef enum QOMX_VPP_HQVCONTROLTYPE {
+    VPP_HQV_CONTROL_CADE = 0x1,
+    VPP_HQV_CONTROL_CNR = 0x04,
+    VPP_HQV_CONTROL_AIE = 0x05,
+    VPP_HQV_CONTROL_CUST = 0x07,
+    VPP_HQV_CONTROL_GLOBAL_DEMO = VPP_HQV_CONTROL_GLOBAL_START,
+    VPP_HQV_CONTROL_MAX,
+} QOMX_VPP_HQVCONTROLTYPE;
+
+typedef enum QOMX_VPP_HQV_HUE_MODE {
+    VPP_HQV_HUE_MODE_OFF,
+    VPP_HQV_HUE_MODE_ON,
+    VPP_HQV_HUE_MODE_MAX,
+} QOMX_VPP_HQV_HUE_MODE;
+
+typedef struct QOMX_VPP_HQVCTRL_CADE {
+    QOMX_VPP_HQV_MODE mode;
+    OMX_U32 level;
+    OMX_S32 contrast;
+    OMX_S32 saturation;
+} QOMX_VPP_HQVCTRL_CADE;
+
+typedef struct QOMX_VPP_HQVCTRL_CNR {
+    QOMX_VPP_HQV_MODE mode;
+    OMX_U32 level;
+} QOMX_VPP_HQVCTRL_CNR;
+
+typedef struct QOMX_VPP_HQVCTRL_AIE {
+    QOMX_VPP_HQV_MODE mode;
+    QOMX_VPP_HQV_HUE_MODE hue_mode;
+    OMX_U32 cade_level;
+    OMX_U32 ltm_level;
+} QOMX_VPP_HQVCTRL_AIE;
+
+typedef struct QOMX_VPP_HQVCTRL_CUSTOM {
+    OMX_U32 id;
+    OMX_U32 len;
+    OMX_U8 data[QOMX_VPP_HQV_CUSTOMPAYLOAD_SZ];
+} QOMX_VPP_HQVCTRL_CUSTOM;
+
+typedef struct QOMX_VPP_HQVCTRL_GLOBAL_DEMO {
+    OMX_U32 process_percent;
+} QOMX_VPP_HQVCTRL_GLOBAL_DEMO;
+
+
+typedef struct QOMX_VPP_HQVCONTROL {
+    QOMX_VPP_HQV_MODE mode;
+    QOMX_VPP_HQVCONTROLTYPE ctrl_type;
+    union {
+        QOMX_VPP_HQVCTRL_CADE cade;
+        QOMX_VPP_HQVCTRL_CNR cnr;
+        QOMX_VPP_HQVCTRL_AIE aie;
+        QOMX_VPP_HQVCTRL_CUSTOM custom;
+        QOMX_VPP_HQVCTRL_GLOBAL_DEMO global_demo;
+    };
+} QOMX_VPP_HQVCONTROL;
+
+/* STRUCTURE TO TURN VPP ON */
+typedef struct QOMX_VPP_ENABLE {
+    OMX_BOOL enable_vpp;
+} QOMX_VPP_ENABLE;
+
+typedef struct QOMX_PICTURE_ORDER_COUNT_TYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nType;
+} QOMX_PICTURE_ORDER_COUNT_TYPE;
 
 #ifdef __cplusplus
 }
