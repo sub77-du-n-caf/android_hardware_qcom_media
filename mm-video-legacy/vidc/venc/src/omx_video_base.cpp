@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2010-2012, 2015 Code Aurora Forum. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -223,7 +223,9 @@ PARAMETERS
 RETURN VALUE
   None.
 ========================================================================== */
-omx_video::omx_video(): m_state(OMX_StateInvalid),
+omx_video::omx_video(): msg_thread_id(0),
+                        async_thread_id(0),
+                        m_state(OMX_StateInvalid),
                         m_app_data(NULL),
                         m_inp_mem_ptr(NULL),
                         m_out_mem_ptr(NULL),
@@ -247,6 +249,8 @@ omx_video::omx_video(): m_state(OMX_StateInvalid),
                         m_use_output_pmem(OMX_FALSE),
                         m_etb_count(0),
                         m_fbd_count(0),
+                        m_pipe_in(-1),
+                        m_pipe_out(-1),
                         m_error_propogated(false),
                         m_input_msg_id(OMX_COMPONENT_GENERATE_ETB),
                         psource_frame(NULL),
@@ -279,12 +283,16 @@ RETURN VALUE
 omx_video::~omx_video()
 {
   DEBUG_PRINT_HIGH("\n ~omx_video(): Inside Destructor()");
-  if(m_pipe_in) close(m_pipe_in);
-  if(m_pipe_out) close(m_pipe_out);
+  if(m_pipe_in >= 0) close(m_pipe_in);
+  if(m_pipe_out >= 0) close(m_pipe_out);
   DEBUG_PRINT_HIGH("omx_video: Waiting on Msg Thread exit\n");
-  pthread_join(msg_thread_id,NULL);
+  if (msg_thread_id != 0) {
+    pthread_join(msg_thread_id,NULL);
+  }
   DEBUG_PRINT_HIGH("omx_video: Waiting on Async Thread exit\n");
-  pthread_join(async_thread_id,NULL);
+  if (async_thread_id != 0) {
+    pthread_join(async_thread_id,NULL);
+  }
   pthread_mutex_destroy(&m_lock);
   sem_destroy(&m_cmd_lock);
   DEBUG_PRINT_HIGH("\n m_etb_count = %u, m_fbd_count = %u\n", m_etb_count,
