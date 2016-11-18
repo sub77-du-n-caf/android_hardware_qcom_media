@@ -179,7 +179,7 @@ class VideoHeap : public MemoryHeapBase
 #define DESC_BUFFER_SIZE (8192 * 16)
 
 #ifdef _ANDROID_
-#define MAX_NUM_INPUT_OUTPUT_BUFFERS 32
+#define MAX_NUM_INPUT_OUTPUT_BUFFERS 64
 #endif
 
 #define OMX_FRAMEINFO_EXTRADATA 0x00010000
@@ -766,6 +766,7 @@ class omx_vdec: public qc_omx_component
         //*************************************************************
         pthread_mutex_t       m_lock;
         pthread_mutex_t       c_lock;
+        pthread_mutex_t       buf_lock;
         //sem to handle the minimum procesing of commands
         sem_t                 m_cmd_lock;
         sem_t                 m_safe_flush;
@@ -922,6 +923,7 @@ class omx_vdec: public qc_omx_component
         omx_time_stamp_reorder time_stamp_dts;
         desc_buffer_hdr *m_desc_buffer_ptr;
         bool secure_mode;
+        bool allocate_native_handle;
         bool external_meta_buffer;
         bool external_meta_buffer_iommu;
         OMX_QCOM_EXTRADATA_FRAMEINFO *m_extradata;

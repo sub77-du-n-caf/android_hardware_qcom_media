@@ -631,6 +631,11 @@ bool venc_dev::venc_get_output_log_flag()
 
 int venc_dev::venc_output_log_buffers(const char *buffer_addr, int buffer_len)
 {
+    if (venc_handle->is_secure_session()) {
+        DEBUG_PRINT_ERROR("logging secure output buffers is not allowed!");
+        return -1;
+    }
+
     if (!m_debug.outfile) {
         int size = 0;
         if(m_sVenc_cfg.codectype == V4L2_PIX_FMT_MPEG4) {
@@ -708,6 +713,11 @@ int venc_dev::venc_extradata_log_buffers(char *buffer_addr)
 }
 
 int venc_dev::venc_input_log_buffers(OMX_BUFFERHEADERTYPE *pbuffer, int fd, int plane_offset) {
+    if (venc_handle->is_secure_session()) {
+        DEBUG_PRINT_ERROR("logging secure input buffers is not allowed!");
+        return -1;
+    }
+
     if (!m_debug.infile) {
         int size = snprintf(m_debug.infile_name, PROPERTY_VALUE_MAX, "%s/input_enc_%d_%d_%p.yuv",
                             m_debug.log_loc, m_sVenc_cfg.input_width, m_sVenc_cfg.input_height, this);
@@ -2426,7 +2436,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
     struct v4l2_plane plane;
     int rc=0;
     struct OMX_BUFFERHEADERTYPE *bufhdr;
-    encoder_media_buffer_type * meta_buf = NULL;
+    LEGACY_CAM_METADATA_TYPE * meta_buf = NULL;
     temp_buffer = (struct pmem *)buffer;
 
     memset (&buf, 0, sizeof(buf));
@@ -2458,7 +2468,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
         // ---------------------------------------------------------------------------------------
         if (metadatamode) {
             plane.m.userptr = index;
-            meta_buf = (encoder_media_buffer_type *)bufhdr->pBuffer;
+            meta_buf = (LEGACY_CAM_METADATA_TYPE *)bufhdr->pBuffer;
 
             if (!meta_buf) {
                 //empty EOS buffer
@@ -2471,14 +2481,15 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                     return false;
                 }
             } else if (!color_format) {
-                if (meta_buf->buffer_type == kMetadataBufferTypeCameraSource) {
+                if (meta_buf->buffer_type == LEGACY_CAM_SOURCE) {
                     plane.data_offset = meta_buf->meta_handle->data[1];
                     plane.length = meta_buf->meta_handle->data[2];
                     plane.bytesused = meta_buf->meta_handle->data[2];
                     DEBUG_PRINT_LOW("venc_empty_buf: camera buf: fd = %d filled %d of %d",
                             fd, plane.bytesused, plane.length);
                 } else if (meta_buf->buffer_type == kMetadataBufferTypeGrallocSource) {
-                    private_handle_t *handle = (private_handle_t *)meta_buf->meta_handle;
+                    VideoGrallocMetadata *meta_buf = (VideoGrallocMetadata *)bufhdr->pBuffer;
+                    private_handle_t *handle = (private_handle_t *)meta_buf->pHandle;
                     fd = handle->fd;
                     plane.data_offset = 0;
                     plane.length = handle->size;
@@ -2579,6 +2590,12 @@ bool venc_dev::venc_fill_buf(void *buffer, void *pmem_data_buf,unsigned index,un
     plane[0].data_offset = bufhdr->nOffset;
     buf.m.planes = plane;
     buf.length = num_planes;
+
+    if (venc_handle->is_secure_session()) {
+        output_metabuffer *meta_buf = (output_metabuffer *)(bufhdr->pBuffer);
+        native_handle_t *handle = meta_buf->nh;
+        plane[0].length = handle->data[3];
+    }
 
     extra_idx = EXTRADATA_IDX(num_planes);
 

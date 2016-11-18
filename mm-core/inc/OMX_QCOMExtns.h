@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2009-2015, The Linux Foundation. All rights reserved.
+Copyright (c) 2009-2016, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -510,6 +510,8 @@ enum OMX_QCOM_EXTN_INDEXTYPE
     /* Enable VQZIP SEI NAL type */
     OMX_QTIIndexParamVQZIPSEIType = 0x7F000053,
 
+    /* OMX.google.android.index.allocateNativeHandle */
+    OMX_GoogleAndroidIndexAllocateNativeHandle = 0x7F00005D,
 };
 
 /**
@@ -1398,6 +1400,8 @@ typedef struct QOMX_VIDEO_QUERY_DECODER_INSTANCES {
 } QOMX_VIDEO_QUERY_DECODER_INSTANCES;
 
 typedef struct QOMX_ENABLETYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
     OMX_BOOL bEnable;
 } QOMX_ENABLETYPE;
 
